@@ -1,0 +1,11 @@
+{
+    "Hello!": "¡Hola!",
+    "Reset Password Notification": "Notificació de restabliment de contrasenya",
+    "You are receiving this email because we received a password reset request for your account.": "Estàs rebent aquest correu electrònic perquè hem rebut una sol·licitud de restabliment de contrasenya per al teu compte.",
+    "Reset Password": "Restablir contrasenya",
+    "This password reset link will expire in :count minutes.": "Aquest enllaç de restabliment de contrasenya caducarà en :count minuts.",
+    "Regards": "Salutacions",
+    "If you did not request a password reset, no further action is required.": "Si no has sol·licitat un restabliment de contrasenya, no cal que facis res més.",
+    "If you're having trouble clicking the \":actionText\" button, copy and paste the URL below\ninto your web browser:": "Si tens problemes per fer clic al botó \":actionText\", copia i enganxa la URL següent\nal teu navegador web:",
+    "All rights reserved.": "Tots els drets reservats."
+}
