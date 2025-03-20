@@ -45,8 +45,9 @@ class UserController extends Controller
                     'name' => $name,
                     'email' => $email
                 ]);
-                $user->sendInviteNotification();
             }
+
+            $user->sendInviteNotification();
         }
 
         return response()->json(['message' => 'Invitations sent successfully'], 201);
