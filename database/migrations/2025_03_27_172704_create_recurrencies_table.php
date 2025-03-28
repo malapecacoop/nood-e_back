@@ -15,11 +15,12 @@ return new class extends Migration
             $table->id();
             $table->integer('type');
             $table->date('end')->nullable();
+            $table->foreignId('first_event_id')->nullable()->constrained('events')->onDelete('cascade');
             $table->timestamps();
         });
 
         Schema::table('events', function (Blueprint $table) {
-            $table->foreignId('recurrency_id')->nullable()->constrained()->onDelete('set null');
+            $table->foreignId('recurrency_id')->nullable()->constrained()->onDelete('cascade');
         });
     }
 

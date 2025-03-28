@@ -21,8 +21,17 @@ class Recurrency extends Model
         'end',
     ];
 
+    protected $casts = [
+        'end' => 'datetime',
+    ];
+
     public function events()
     {
         return $this->hasMany(Event::class);
+    }
+
+    public function firstEvent()
+    {
+        return $this->belongsTo(Event::class);
     }
 }

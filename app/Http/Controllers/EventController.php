@@ -57,12 +57,17 @@ class EventController extends Controller
         list($recurrencyType, $recurrencyEnd) = $this->getRecurrencyFromData($data);
 
         if ($recurrencyType) {
-            $this->setRecurrency($data, $eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
+            $recurrency = $this->setRecurrency($data, $eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
         }
 
         $event = Event::create($data);
 
         $event = $this->attachMembers($event, $members);
+
+        if (isset($recurrency)) {
+            $recurrency->first_event_id = $event->id;
+            $recurrency->save();
+        } 
 
         return response()->json($event, 201);
     }
@@ -116,7 +121,7 @@ class EventController extends Controller
     private function getRecurrencyFromData(array &$data): array
     {
         $recurrencyType = $data['recurrency_type'] ?? null;
-        $recurrencyEnd = $data['recurrency_end'] ? new Carbon($data['recurrency_end']) : null;
+        $recurrencyEnd = isset($data['recurrency_end']) ? new Carbon($data['recurrency_end']) : null;
 
         unset($data['recurrency_type']);
         unset($data['recurrency_end']);
@@ -129,8 +134,8 @@ class EventController extends Controller
         Carbon $eventStart,
         Carbon $eventEnd,
         int $recurrencyType,
-        Carbon  $recurrencyEnd,
-        ?int $roomId): void
+        ?Carbon  $recurrencyEnd,
+        ?int $roomId): Recurrency
     {
         if ($roomId) {
             $this->checkRoomAvailabilityForRecurrency($eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
@@ -142,6 +147,8 @@ class EventController extends Controller
         ]);
 
         $data['recurrency_id'] = $recurrency->id;
+
+        return $recurrency;
     }
 
     private function checkRoomAvailability(Carbon $eventStart, Carbon $eventEnd, ?int $roomId): void

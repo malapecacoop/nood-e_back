@@ -22,6 +22,11 @@ class Event extends Model
         'recurrency_id',
     ];
 
+    protected $casts = [
+        'start' => 'datetime',
+        'end' => 'datetime',
+    ];
+
     public function author(): BelongsTo
     {
         return $this->belongsTo(User::class, 'author_id');
