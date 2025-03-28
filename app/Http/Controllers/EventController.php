@@ -221,7 +221,39 @@ class EventController extends Controller
         int $roomId
     ): void
     {
-        // TODO: check room availability for each recurrency event in the next Recurrency::DAYS_GENERATE days
-        abort(409, 'Room is not available for the specified recurrency.');
+        $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+        if (!$recurrencyEnd || $recurrencyEnd->isAfter($maxRecurrencyDate)) {
+            $recurrencyEnd = $maxRecurrencyDate;
+        }
+        $recurrencyEnd->addDay();
+
+        $addPeriodMethod = Recurrency::getCarbonMethod($recurrencyType);
+        $eventStart->$addPeriodMethod();
+        $eventEnd->$addPeriodMethod();
+
+        $datesToCheck = [];
+        while ($eventStart->isBefore($recurrencyEnd)) {
+            $datesToCheck[] = [
+                'start' => $eventStart->format('Y-m-d H:i:s'),
+                'end' => $eventEnd->format('Y-m-d H:i:s'),
+            ];
+
+            $eventStart->$addPeriodMethod();
+            $eventEnd->$addPeriodMethod();
+        }
+        $room = Room::isAvailable()->where('id', $roomId)->whereDoesntHave('events', function ($query) use ($datesToCheck) {
+            $query->where(function ($query) use ($datesToCheck) {
+                foreach ($datesToCheck as $dates) {
+                    $query->orWhere(function ($query) use ($dates) {
+                        $query->where('start', '<', $dates['end'])
+                            ->where('end', '>', $dates['start']);
+                    });
+                }
+            });
+        })->first();
+
+        if (!$room) {
+            abort(409, 'Room is not available for some dates in the recurrency.');
+        }
     }
 }

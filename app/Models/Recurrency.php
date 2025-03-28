@@ -54,7 +54,7 @@ class Recurrency extends Model
         }
         $dateRecurrencyEnd->addDay();
 
-        $addPeriodMethod = $this->getCarbonMethod($this->type);
+        $addPeriodMethod = self::getCarbonMethod($this->type);
 
         $events = [];
 
@@ -86,7 +86,7 @@ class Recurrency extends Model
         }
     }
 
-    private function getCarbonMethod($type)
+    public static function getCarbonMethod($type)
     {
         switch ($type) {
             case Recurrency::TYPE_DAY:
