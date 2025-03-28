@@ -33,6 +33,7 @@ Route::middleware('api')->group(function () {
         Route::get('/events/{event}', [EventController::class, 'show']);
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{event}', [EventController::class, 'update']);
+        Route::put('/events/{event}/recurrency-end', [EventController::class, 'updateRecurrencyEnd']);
         Route::delete('/events/{event}', [EventController::class, 'destroy']);
         
         Route::post('/discussions/{discussion}/{topic}', [CommentController::class, 'store']);

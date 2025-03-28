@@ -19,34 +19,59 @@ class RecurrencyObserver
 
             $dateRecurrencyEnd->addDay();
 
-            switch ($recurrency->type) {
-                case Recurrency::TYPE_DAY:
-                    $addPeriodFunction = 'addDay';
-                    break;
-                case Recurrency::TYPE_WEEK:
-                    $addPeriodFunction = 'addWeek';
-                    break;
-                case Recurrency::TYPE_MONTH:
-                    $addPeriodFunction = 'addMonthNoOverflow';
-                    break;
-                case Recurrency::TYPE_YEAR:
-                    $addPeriodFunction = 'addYear';
-                    break;
-                default:
-                    throw new \InvalidArgumentException('Invalid recurrency type');
-            }
+            $this->generateEvents($recurrency, $recurrency->firstEvent, $dateRecurrencyEnd);
+        }
 
-            $this->generateEvents($recurrency, $recurrency->firstEvent, $dateRecurrencyEnd, $addPeriodFunction);
+        if ($recurrency->isDirty('end')) {
+            $oldEnd = $recurrency->getOriginal('end');
+            $dateRecurrencyEnd = $recurrency->end;
+            $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+            if (!$dateRecurrencyEnd || $dateRecurrencyEnd->isAfter($maxRecurrencyDate)) {
+                $dateRecurrencyEnd = $maxRecurrencyDate;
+            }
+            $dateRecurrencyEnd->addDay();
+            if (!$oldEnd || $oldEnd->isAfter($maxRecurrencyDate)) {
+                $oldEnd = $maxRecurrencyDate;
+            }
+            $oldEnd->addDay();
+
+            if ($dateRecurrencyEnd->isBefore($oldEnd)) {
+                Event::where('recurrency_id', $recurrency->id)
+                    ->where('start', '>=', $dateRecurrencyEnd)
+                    ->delete();
+            } else {
+                $lastEvent = Event::where('recurrency_id', $recurrency->id)
+                    ->orderBy('start', 'desc')
+                    ->first();
+
+                $this->generateEvents($recurrency, $lastEvent, $dateRecurrencyEnd);
+            }
         }
     }
 
     private function generateEvents(
         Recurrency $recurrency,
         Event $event,
-        Carbon $recurrencyEnd,
-        string $addPeriodFunction
+        Carbon $recurrencyEnd
     ): void
     {
+        switch ($recurrency->type) {
+            case Recurrency::TYPE_DAY:
+                $addPeriodFunction = 'addDay';
+                break;
+            case Recurrency::TYPE_WEEK:
+                $addPeriodFunction = 'addWeek';
+                break;
+            case Recurrency::TYPE_MONTH:
+                $addPeriodFunction = 'addMonthNoOverflow';
+                break;
+            case Recurrency::TYPE_YEAR:
+                $addPeriodFunction = 'addYear';
+                break;
+            default:
+                throw new \InvalidArgumentException('Invalid recurrency type');
+        }
+
         $events = [];
 
         $dateStart = $event->start;

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Http\Requests\EventRequest;
+use App\Http\Requests\RecurrencyEndRequest;
 use App\Models\Event;
 use App\Models\Recurrency;
 use App\Models\Room;
@@ -113,6 +114,24 @@ class EventController extends Controller
         }
 
         $event = $this->attachMembers($event, $members);
+
+        return response()->json($event);
+    }
+
+    public function updateRecurrencyEnd(RecurrencyEndRequest $request, Event $event)
+    {
+        Gate::authorize('update', $event);
+
+        $data = $request->validated();
+
+        if (!$event->recurrency_id) {
+            abort(409, 'You cannot update an event that is not part of a recurrency.');
+        }
+
+        $event->recurrency->update([
+            'end' => $data['recurrency_end'],
+        ]);
+        $event->recurrency->save();
 
         return response()->json($event);
     }
