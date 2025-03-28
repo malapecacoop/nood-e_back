@@ -73,12 +73,14 @@ class Recurrency extends Model
                 'start' => $dateStart->format('Y-m-d H:i:s'), //this is needed to freeze the date (because the object $dateStart changes in each iteration)
                 'end' => $dateEnd->format('Y-m-d H:i:s'), // idem
                 'recurrency_id' => $this->id,
+                'created_at' => now(),
+                'updated_at' => now(),
             ];
 
             $dateStart->$addPeriodMethod();
             $dateEnd->$addPeriodMethod();
         }
-        $this->events()->createMany($events);
+        $this->events()->insert($events);
 
         $members = $fromEvent->members->pluck('id')->toArray();
         foreach ($this->events as $event) {
