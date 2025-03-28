@@ -140,6 +140,13 @@ class EventController extends Controller
     {
         Gate::authorize('delete', $event);
 
+        if ($event->recurrency_id) {
+            // this will delete all events in the recurrency because of the cascade constraint
+            $event->recurrency->delete();
+
+            return response()->json(['message' => 'All events in the recurrency deleted successfully'], 200);
+        }
+
         $event->delete();
 
         return response()->json(['message' => 'Event deleted successfully'], 200);
