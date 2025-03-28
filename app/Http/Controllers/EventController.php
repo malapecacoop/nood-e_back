@@ -67,7 +67,7 @@ class EventController extends Controller
         if (isset($recurrency)) {
             $recurrency->first_event_id = $event->id;
             $recurrency->save();
-        } 
+        }
 
         return response()->json($event, 201);
     }
@@ -82,11 +82,35 @@ class EventController extends Controller
     {
         Gate::authorize('update', $event);
 
+        if ($event->recurrency_id) {
+            abort(409, 'You cannot update an event that is part of a recurrency.');
+        }
+
         $data = $request->validated();
 
         $members = $this->getMembersFromData($data);
 
+        $eventStart = new Carbon($data['start']);
+        $eventEnd = new Carbon($data['end']);
+
+        $roomId = $data['room_id'] ?? null;
+
+        if ($roomId) {
+            $this->checkRoomAvailability($eventStart, $eventEnd, $data['room_id']);
+        }
+
+        list($recurrencyType, $recurrencyEnd) = $this->getRecurrencyFromData($data);
+
+        if ($recurrencyType) {
+            $recurrency = $this->setRecurrency($data, $eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
+        }
+
         $event->update($data);
+
+        if (isset($recurrency)) {
+            $recurrency->first_event_id = $event->id;
+            $recurrency->save();
+        }
 
         $event = $this->attachMembers($event, $members);
 
