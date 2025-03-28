@@ -128,6 +128,9 @@ class EventController extends Controller
             abort(409, 'You cannot update an event that is not part of a recurrency.');
         }
 
+        $recurrencyEnd = isset($data['recurrency_end']) ? new Carbon($data['recurrency_end']) : null;
+        $this->checkRoomAvailabilityForRecurrency($event->start, $event->end, $event->recurrency->type, $recurrencyEnd, $event->room_id, $event->recurrency->id);
+
         $event->recurrency->update([
             'end' => $data['recurrency_end'],
         ]);
@@ -188,7 +191,9 @@ class EventController extends Controller
         ?int $roomId): Recurrency
     {
         if ($roomId) {
-            $this->checkRoomAvailabilityForRecurrency($eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
+            // clone the recurrencyEnd to avoid modifying the original object
+            $recurrencyEndCopy = $recurrencyEnd ? $recurrencyEnd->copy() : null;
+            $this->checkRoomAvailabilityForRecurrency($eventStart, $eventEnd, $recurrencyType, $recurrencyEndCopy, $roomId);
         }
 
         $recurrency = Recurrency::create([
@@ -218,7 +223,8 @@ class EventController extends Controller
         Carbon $eventEnd,
         int $recurrencyType,
         ?Carbon $recurrencyEnd,
-        int $roomId
+        int $roomId,
+        ?int $excludeRecurrencyId = null
     ): void
     {
         $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
@@ -241,7 +247,10 @@ class EventController extends Controller
             $eventStart->$addPeriodMethod();
             $eventEnd->$addPeriodMethod();
         }
-        $room = Room::isAvailable()->where('id', $roomId)->whereDoesntHave('events', function ($query) use ($datesToCheck) {
+        $room = Room::isAvailable()->where('id', $roomId)->whereDoesntHave('events', function ($query) use ($datesToCheck, $excludeRecurrencyId) {
+            if ($excludeRecurrencyId) {
+                $query->where('recurrency_id', '!=', $excludeRecurrencyId);
+            }
             $query->where(function ($query) use ($datesToCheck) {
                 foreach ($datesToCheck as $dates) {
                     $query->orWhere(function ($query) use ($dates) {

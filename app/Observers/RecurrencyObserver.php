@@ -15,14 +15,11 @@ class RecurrencyObserver
 
         if ($recurrency->isDirty('end')) {
             $oldEnd = $recurrency->getOriginal('end');
-            $newEnd = $recurrency->end;
-            if ($newEnd) {
-                $newEnd->addDay();
-            }
+            $newEnd = $recurrency->end ? $recurrency->end->copy() : null;
 
             if (!$oldEnd || ($newEnd && $newEnd->isBefore($oldEnd))) {
                 Event::where('recurrency_id', $recurrency->id)
-                    ->where('start', '>', $newEnd)
+                    ->where('start', '>', $newEnd->addDay())
                     ->delete();
             } else {
                 $recurrency->generateEvents();
