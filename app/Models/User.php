@@ -125,7 +125,7 @@ class User extends Authenticatable implements JWTSubject
 
         $userId = $this->id;
         $signature = substr($url, strpos($url, '?signature=') + 11);
-        
+
         return config('app.frontend_url') . '/invitation?user_id=' . $userId . '&signature=' . $signature;
     }
 

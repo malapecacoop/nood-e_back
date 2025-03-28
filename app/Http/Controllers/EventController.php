@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\EventRequest;
 use App\Models\Event;
+use App\Models\Recurrency;
+use App\Models\Room;
 use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -42,6 +44,21 @@ class EventController extends Controller
         $data['author_id'] = $this->user->id;
 
         $members = $this->getMembersFromData($data);
+
+        $eventStart = new Carbon($data['start']);
+        $eventEnd = new Carbon($data['end']);
+
+        $roomId = $data['room_id'] ?? null;
+
+        if ($roomId) {
+            $this->checkRoomAvailability($eventStart, $eventEnd, $data['room_id']);
+        }
+
+        list($recurrencyType, $recurrencyEnd) = $this->getRecurrencyFromData($data);
+
+        if ($recurrencyType) {
+            $this->setRecurrency($data, $eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
+        }
 
         $event = Event::create($data);
 
@@ -94,5 +111,60 @@ class EventController extends Controller
         $event->load('members');
 
         return $event;
+    }
+
+    private function getRecurrencyFromData(array &$data): array
+    {
+        $recurrencyType = $data['recurrency_type'] ?? null;
+        $recurrencyEnd = $data['recurrency_end'] ? new Carbon($data['recurrency_end']) : null;
+
+        unset($data['recurrency_type']);
+        unset($data['recurrency_end']);
+
+        return [$recurrencyType, $recurrencyEnd];
+    }
+
+    private function setRecurrency(
+        array &$data,
+        Carbon $eventStart,
+        Carbon $eventEnd,
+        int $recurrencyType,
+        Carbon  $recurrencyEnd,
+        ?int $roomId): void
+    {
+        if ($roomId) {
+            $this->checkRoomAvailabilityForRecurrency($eventStart, $eventEnd, $recurrencyType, $recurrencyEnd, $roomId);
+        }
+
+        $recurrency = Recurrency::create([
+            'type' => $recurrencyType,
+            'end' => $recurrencyEnd,
+        ]);
+
+        $data['recurrency_id'] = $recurrency->id;
+    }
+
+    private function checkRoomAvailability(Carbon $eventStart, Carbon $eventEnd, ?int $roomId): void
+    {
+        $room = Room::isAvailable()->where('id', $roomId)->whereDoesntHave('events', function ($query) use ($eventStart, $eventEnd) {
+            $query->where('start', '<', $eventEnd)
+                ->where('end', '>', $eventStart);
+        })->first();
+
+        if (!$room) {
+            abort(409, 'Room is not available for the specified time.');
+        }
+    }
+
+    private function checkRoomAvailabilityForRecurrency(
+        Carbon $eventStart,
+        Carbon $eventEnd,
+        int $recurrencyType,
+        ?Carbon $recurrencyEnd,
+        int $roomId
+    ): void
+    {
+        // TODO: check room availability for each recurrency event in the next Recurrency::DAYS_GENERATE days
+        abort(409, 'Room is not available for the specified recurrency.');
     }
 }

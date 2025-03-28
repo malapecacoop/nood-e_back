@@ -18,7 +18,8 @@ class Event extends Model
         'end',
         'meet_link',
         'room_id',
-        'author_id'
+        'author_id',
+        'recurrency_id',
     ];
 
     public function author(): BelongsTo
@@ -34,5 +35,10 @@ class Event extends Model
     public function members(): BelongsToMany
     {
         return $this->belongsToMany(User::class, 'event_user', 'event_id', 'user_id');
+    }
+
+    public function recurrency(): BelongsTo
+    {
+        return $this->belongsTo(Recurrency::class);
     }
 }
