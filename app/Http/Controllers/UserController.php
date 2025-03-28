@@ -22,6 +22,10 @@ class UserController extends Controller
             $users = $users->withTrashed();
         }
 
+        if (isset($params['show_only_deleted']) && $params['show_only_deleted'] == 1) {
+            $users = $users->onlyTrashed();
+        }
+
         $users = $users->whereNotNull('invite_accepted_at')
             ->with('organization', 'role')->orderBy('name')->get()->values();
         return response()->json($users);
@@ -45,8 +49,9 @@ class UserController extends Controller
                     'name' => $name,
                     'email' => $email
                 ]);
-                $user->sendInviteNotification();
             }
+
+            $user->sendInviteNotification();
         }
 
         return response()->json(['message' => 'Invitations sent successfully'], 201);
