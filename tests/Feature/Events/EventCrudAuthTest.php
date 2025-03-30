@@ -160,55 +160,6 @@ class EventCrudAuthTest extends TestCase
             );
     }
 
-    public function test_get_room_events_date_filter(): void
-    {
-        $room = $this->createRoom();
-        $event1 = $this->createEvent($room, $this->user);
-        $event1->update(['start' => now()->subMonth()]);
-        $event1->update(['end' => now()->subMonth()->addHour()]);
-
-        $event2 = $this->createEvent($room, $this->user);
-
-        $event3 = $this->createEvent($room, $this->user);
-        $event3->update(['start' => now()->addMonth()]);
-        $event3->update(['end' => now()->addMonth()->addHour()]);
-
-        // TODO: this test is not working
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}")
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}?start=" . now()->subMonth()->startOfMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}?start=" . now()->addMonth()->startOfMonth()->format('Y-m-d') . '&end=' . now()->addMonth()->endofMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
-    }
-
     public function test_auth_user_can_get_free_rooms(): void
     {
         $room1 = $this->createRoom($this->user);
