@@ -4,6 +4,7 @@ namespace Tests\Feature\Rooms;
 
 use App\Models\Room;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\Authentication;
 use Tests\TestCase;
 
@@ -30,6 +31,11 @@ class RoomCrudAuthTest extends TestCase
 
     public function test_auth_user_can_get_all_available_rooms(): void
     {
+        // reset auto-increment ID for rooms table
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('rooms')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $room1 = $this->createRoom($this->user);
         $room2 = $this->createRoom($this->user);
         $room2->update(['is_available' => false]);

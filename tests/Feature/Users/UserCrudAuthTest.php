@@ -34,13 +34,15 @@ class UserCrudAuthTest extends TestCase
 
     public function test_auth_user_can_get_all_users(): void
     {
+        $countBefore = User::count();
+        
         $user = $this->createUser();
 
         $this->authenticated()
             ->get('/api/v1/users')
             ->assertStatus(200)
             ->assertJsonIsArray()
-            ->assertJsonCount(2)
+            ->assertJsonCount($countBefore + 1)
             ->assertJsonStructure([
                 '*' => [
                     'name',
