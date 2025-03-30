@@ -30,7 +30,7 @@ Route::middleware('api')->group(function () {
         Route::post('/set-password', [AuthController::class, 'setPassword']);
 
         Route::get('/events', [EventController::class, 'index']);
-        Route::get('/events/rooms', [EventController::class, 'indexRooms']);
+        Route::get('/events/rooms/{room?}', [EventController::class, 'indexRooms']);
         Route::get('/events/{event}', [EventController::class, 'show']);
         Route::post('/events', [EventController::class, 'store']);
         Route::put('/events/{event}', [EventController::class, 'update']);

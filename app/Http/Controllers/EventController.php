@@ -37,10 +37,12 @@ class EventController extends Controller
             });
         }
 
-        return response()->json($events->get(), 200);
+        $events = $events->get();
+
+        return response()->json($events, 200);
     }
 
-    public function indexRooms(Request $request)
+    public function indexRooms(Request $request, ?Room $room = null)
     {
         $dateStart = $request->get('start') ? new Carbon($request->get('start')) : now()->startOfMonth();
         $dateEnd = $request->get('end') ? new Carbon($request->get('end')) : $dateStart->copy()->addMonths(2);
@@ -56,7 +58,13 @@ class EventController extends Controller
             ->where('end', '<', $dateEnd)
             ->whereNotNull('room_id');
 
-        return response()->json($events->get(), 200);
+        if ($room) {
+            $events->where('room_id', $room->id);
+        }
+
+        $events = $events->get();
+
+        return response()->json($events, 200);
     }
 
     public function store(EventRequest $request): JsonResponse
