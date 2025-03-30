@@ -84,47 +84,61 @@ class EventCrudAuthTest extends TestCase
             ->assertJsonCount(2);
     }
 
-    public function test_list_events_date_filter(): void
+    public function test_list_events_date_filter_dont_show_more_than_two_months(): void
     {
         $room = $this->createRoom();
-        $event1 = $this->createEvent($room, $this->user);
-        $event1->update(['start' => now()->subMonth()]);
-        $event1->update(['end' => now()->subMonth()->addHour()]);
+        
+        $veryPastEvent = $this->createEvent($room, $this->user);
+        $veryPastEvent->update(['start' => now()->subMonthsNoOverflow(3)]);
+        $veryPastEvent->update(['end' => now()->subMonthsNoOverflow(3)->addHour()]);
 
-        $event2 = $this->createEvent($room, $this->user);
+        $veryFutureEvent = $this->createEvent($room, $this->user);
+        $veryFutureEvent->update(['start' => now()->addMonthsNoOverflow(3)]);
+        $veryFutureEvent->update(['end' => now()->addMonthsNoOverflow(3)->addHour()]);
 
-        $event3 = $this->createEvent($room, $this->user);
-        $event3->update(['start' => now()->addMonth()]);
-        $event3->update(['end' => now()->addMonth()->addHour()]);
+        $pastMonthEvent = $this->createEvent($room, $this->user);
+        $pastMonthEvent->update(['start' => now()->subMonthNoOverflow()]);
+        $pastMonthEvent->update(['end' => now()->subMonthNoOverflow()->addHour()]);
 
-        // TODO: this test is not working
+        $todayEvent = $this->createEvent($room, $this->user);
+        $todayEvent->update(['start' => now()]);
+        $todayEvent->update(['end' => now()->addHour()]);
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events')
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event2->id)
-        //         ->etc()
-        //     );
+        $nextMonthEvent = $this->createEvent($room, $this->user);
+        $nextMonthEvent->update(['start' => now()->addMonthNoOverflow()]);
+        $nextMonthEvent->update(['end' => now()->addMonthNoOverflow()->addHour()]);
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events?start=' . now()->subMonth()->startOfMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event1->id)
-        //         ->etc()
-        //     );
+        // without dates, show range is from beginning of the month + 2 months
+        $this->authenticated()
+            ->get('/api/v1/events')
+            ->assertStatus(200)
+            ->assertJsonCount(2)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $todayEvent->id)
+                ->where('1.id', $nextMonthEvent->id)
+                ->etc()
+            );
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events?start=' . now()->addMonth()->startOfMonth()->format('Y-m-d') . '&end=' . now()->addMonth()->endofMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event3->id)
-        //         ->etc()
-        //     );
+        // with start date, show range is from start date + 2 months
+        $this->authenticated()
+            ->get('/api/v1/events?start=' . now()->subMonthNoOverflow(1)->startOfMonth()->format('Y-m-d'))
+            ->assertStatus(200)
+            ->assertJsonCount(2)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $pastMonthEvent->id)
+                ->where('1.id', $todayEvent->id)
+                ->etc()
+            );
+
+        // with start and end date, show range is from start date to end date
+        $this->authenticated()
+            ->get('/api/v1/events?start=' . now()->subMonthNoOverflow(1)->startOfMonth()->format('Y-m-d') . '&end=' . now()->subMonthNoOverflow(1)->endOfMonth()->format('Y-m-d'))
+            ->assertStatus(200)
+            ->assertJsonCount(1)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $pastMonthEvent->id)
+                ->etc()
+            );
     }
 
     public function test_list_rooms_events_date_filter(): void
