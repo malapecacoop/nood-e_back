@@ -6,6 +6,7 @@ use App\Models\Event;
 use App\Models\Recurrency;
 use App\Models\Room;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\Authentication;
 use Tests\TestCase;
 
@@ -37,6 +38,11 @@ class RecurrencyCrudAuthTest extends TestCase
 
     public function test_auth_user_can_create_event_with_recurrency(): void
     {
+        // reset auto-increment ID for recurrencies table
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('recurrencies')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $this->authenticated()
             ->post('/api/v1/events', [
                 'title' => 'Event title',
@@ -55,6 +61,11 @@ class RecurrencyCrudAuthTest extends TestCase
 
     public function test_event_with_recurrency_cannot_be_created_if_room_is_not_available_for_any_event_in_recurrency(): void
     {
+        // reset auto-increment ID for recurrencies table
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::table('recurrencies')->truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
         $room = $this->createRoom();
         $event1 = $this->createEvent($room, $this->user);
         $event1->update([
@@ -76,6 +87,7 @@ class RecurrencyCrudAuthTest extends TestCase
             ->assertJson([
                 'title' => 'Event title',
                 'author_id' => $this->user->id,
+                'recurrency_id' => 1,
             ]);
 
         // Create a new event with recurrency in an unavailable room
