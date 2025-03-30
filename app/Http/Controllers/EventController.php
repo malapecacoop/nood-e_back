@@ -78,6 +78,11 @@ class EventController extends Controller
         $eventStart = new Carbon($data['start']);
         $eventEnd = new Carbon($data['end']);
 
+        $maxGenerateDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+        if ($eventStart->isAfter($maxGenerateDate)) {
+            abort(409, 'Event start date is too far in the future');
+        }
+
         $roomId = $data['room_id'] ?? null;
 
         if ($roomId) {
