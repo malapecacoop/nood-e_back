@@ -47,6 +47,10 @@ class Recurrency extends Model
             $fromEvent = $this->events()->orderBy('start', 'desc')->first();
         }
 
+        if (!$fromEvent) {
+            throw new \Exception('Cannot generate events for recurrency, no first event found');
+        }
+
         $dateRecurrencyEnd = $this->end;
         $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
         if (!$dateRecurrencyEnd || $dateRecurrencyEnd->isAfter($maxRecurrencyDate)) {

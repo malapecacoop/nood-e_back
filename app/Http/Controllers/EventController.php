@@ -243,7 +243,7 @@ class EventController extends Controller
         })->first();
 
         if (!$room) {
-            abort(409, 'Room is not available for the specified time.');
+            abort(409, 'Room is not available for the specified time');
         }
     }
 
@@ -291,7 +291,7 @@ class EventController extends Controller
         })->first();
 
         if (!$room) {
-            abort(409, 'Room is not available for some dates in the recurrency.');
+            abort(409, 'Room is not available for some dates in the recurrency');
         }
     }
 }

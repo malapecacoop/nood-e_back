@@ -285,7 +285,6 @@ class EventCrudAuthTest extends TestCase
             ]);
     }
 
-
     public function test_auth_user_can_create_event_with_members(): void
     {
         $user1 = User::factory()->create();
@@ -417,4 +416,50 @@ class EventCrudAuthTest extends TestCase
         ]);
     }
 
+    public function test_event_with_room_can_only_be_created_if_room_is_available(): void
+    {
+        $room = $this->createRoom();
+        $event1 = $this->createEvent($room, $this->user);
+
+        // Create a second event with the same room but available time
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(11)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room->id,
+            ])
+            ->assertCreated()
+            ->assertJson([
+                'title' => 'Event title',
+                'start' => now()->setHour(11)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'author_id' => $this->user->id,
+                'room_id' => $room->id
+            ]);
+
+        // Create a third event with the same room but not available time
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room->id,
+            ])
+            ->assertStatus(409)
+            ->assertJson(['message' => 'Room is not available for the specified time']);
+
+        $room2 = $this->createRoom();
+        $room2->update(['is_available' => false]);
+        // Create a fourth event with a room that is not available
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room2->id,
+            ])
+            ->assertStatus(409)
+            ->assertJson(['message' => 'Room is not available for the specified time']);
+    }
 }
