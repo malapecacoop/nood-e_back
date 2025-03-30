@@ -236,8 +236,8 @@ class EventCrudAuthTest extends TestCase
         $event->update(['end' => now()->addDay()->setHour(14)->setMinute(0)->setSecond(0)]);
 
         $this->authenticated()
-            ->get('/api/v1/rooms/free?start='.now()->addDay()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s')
-                .'&end=' . now()->addDay()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'))
+            ->get('/api/v1/rooms/free?start='.now()->addDay()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s')
+                .'&end=' . now()->addDay()->setHour(13)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'))
             ->assertStatus(200)
             ->assertJsonIsArray()
             ->assertJsonCount(2)
@@ -263,8 +263,8 @@ class EventCrudAuthTest extends TestCase
             ->assertJson([
                 'title' => 'Event title',
                 'description' => 'Event description',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'meet_link' => 'https://meet.google.com/abc-def-ghi',
                 'room_id' => $room->id,
                 'author_id' => $this->user->id
@@ -276,14 +276,14 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->post('/api/v1/events', [
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertCreated()
             ->assertJson([
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $this->user->id
             ]);
     }
@@ -296,13 +296,13 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])->assertStatus(200)
             ->assertJson([
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $this->user->id
             ]);
     }
@@ -317,8 +317,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertStatus(403);
     }
@@ -334,14 +334,14 @@ class EventCrudAuthTest extends TestCase
             ->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertStatus(200)
             ->assertJson([
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $user->id
             ]);
     }
@@ -355,8 +355,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->post('/api/v1/events', [
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id, $user2->id]
             ])
             ->assertCreated(201)
@@ -380,8 +380,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Event title updated',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id, $user2->id]
             ])
             ->assertStatus(200)
@@ -397,8 +397,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Event title updated',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id]
             ])
             ->assertStatus(200)
