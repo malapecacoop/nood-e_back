@@ -40,6 +40,25 @@ class EventController extends Controller
         return response()->json($events->get(), 200);
     }
 
+    public function indexRooms(Request $request)
+    {
+        $dateStart = $request->get('start') ? new Carbon($request->get('start')) : now()->startOfMonth();
+        $dateEnd = $request->get('end') ? new Carbon($request->get('end')) : $dateStart->copy()->addMonths(2);
+
+        //if dateEnd > dateStart + 2 months, set dateEnd to dateStart + 2 months
+        if ($dateEnd->diffInMonths($dateStart, true) > 2) {
+            $dateEnd = $dateStart->copy()->addMonths(2);
+        }
+
+        $dateEnd->addDay();
+
+        $events = Event::where('start', '>=', $dateStart)
+            ->where('end', '<', $dateEnd)
+            ->whereNotNull('room_id');
+
+        return response()->json($events->get(), 200);
+    }
+
     public function store(EventRequest $request): JsonResponse
     {
         $data = $request->validated();

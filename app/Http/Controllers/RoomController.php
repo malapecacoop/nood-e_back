@@ -28,10 +28,7 @@ class RoomController extends Controller
             $rooms = $rooms->isAvailable();
         }
 
-        $rooms = $rooms->with(['events' => function($query) use ($dateStart, $dateEnd) {
-            $query->where('start', '>=', $dateStart)
-                ->where('end', '<', $dateEnd);
-        }])->get();
+        $rooms = $rooms->get();
 
         return response()->json($rooms, 200);
     }
