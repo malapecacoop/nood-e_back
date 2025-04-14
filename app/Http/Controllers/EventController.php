@@ -109,7 +109,7 @@ class EventController extends Controller
 
     public function show(Event $event)
     {
-        $event->load('members', 'room', 'author', 'author.organization');
+        $event->load('members', 'room', 'author', 'author.organization', 'recurrency');
         return response()->json($event);
     }
 
