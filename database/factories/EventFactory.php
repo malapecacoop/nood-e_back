@@ -16,7 +16,10 @@ class EventFactory extends Factory
     public function definition()
     {
         $start = fake()->dateTimeBetween($startDate = '-10 days', $endDate = '10 days', $timezone = null);
-        $end = (new \Carbon\Carbon($start))->addHours(rand(1, 5));
+        if ((int)$start->format('H') >= 19) {
+            $start->setTime(19, 0);
+        }
+        $end = (new \Carbon\Carbon($start))->addHours(rand(1, 4));
 
         return [
             'title' => fake()->name(),
