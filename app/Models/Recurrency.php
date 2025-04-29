@@ -52,7 +52,7 @@ class Recurrency extends Model
         }
 
         $dateRecurrencyEnd = $this->end;
-        $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+        $maxRecurrencyDate = Carbon::today()->addDays(Recurrency::DAYS_GENERATE);
         if (!$dateRecurrencyEnd || $dateRecurrencyEnd->isAfter($maxRecurrencyDate)) {
             $dateRecurrencyEnd = $maxRecurrencyDate;
         }

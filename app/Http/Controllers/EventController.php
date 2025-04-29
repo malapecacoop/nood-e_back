@@ -78,7 +78,7 @@ class EventController extends Controller
         $eventStart = new Carbon($data['start']);
         $eventEnd = new Carbon($data['end']);
 
-        $maxGenerateDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+        $maxGenerateDate = Carbon::today()->addDays(Recurrency::DAYS_GENERATE + 1);
         if ($eventStart->isAfter($maxGenerateDate)) {
             abort(409, 'Event start date is too far in the future');
         }
@@ -128,6 +128,11 @@ class EventController extends Controller
         $eventStart = new Carbon($data['start']);
         $eventEnd = new Carbon($data['end']);
 
+        $maxGenerateDate = Carbon::today()->addDays(Recurrency::DAYS_GENERATE + 1);
+        if ($eventStart->isAfter($maxGenerateDate)) {
+            abort(409, 'Event start date is too far in the future');
+        }
+
         $roomId = $data['room_id'] ?? null;
 
         if ($roomId) {
@@ -163,8 +168,9 @@ class EventController extends Controller
         }
 
         $recurrencyEnd = isset($data['recurrency_end']) ? new Carbon($data['recurrency_end']) : null;
-        $this->checkRoomAvailabilityForRecurrency($event->start, $event->end, $event->recurrency->type, $recurrencyEnd, $event->room_id, $event->recurrency->id);
-
+        if ($event->room_id) {
+            $this->checkRoomAvailabilityForRecurrency($event->start, $event->end, $event->recurrency->type, $recurrencyEnd, $event->room_id, $event->recurrency->id);
+        }
         $event->recurrency->update([
             'end' => $data['recurrency_end'],
         ]);
@@ -261,7 +267,7 @@ class EventController extends Controller
         ?int $excludeRecurrencyId = null
     ): void
     {
-        $maxRecurrencyDate = Carbon::now()->addDays(Recurrency::DAYS_GENERATE);
+        $maxRecurrencyDate = Carbon::today()->addDays(Recurrency::DAYS_GENERATE);
         if (!$recurrencyEnd || $recurrencyEnd->isAfter($maxRecurrencyDate)) {
             $recurrencyEnd = $maxRecurrencyDate;
         }
