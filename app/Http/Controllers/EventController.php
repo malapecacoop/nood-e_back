@@ -153,6 +153,7 @@ class EventController extends Controller
         }
 
         $event = $this->attachMembers($event, $members);
+        $event->load('room', 'author', 'author.organization', 'recurrency');
 
         return response()->json($event);
     }
@@ -175,6 +176,7 @@ class EventController extends Controller
             'end' => $data['recurrency_end'],
         ]);
         $event->recurrency->save();
+        $event->load('members', 'room', 'author', 'author.organization', 'recurrency');
 
         return response()->json($event);
     }
