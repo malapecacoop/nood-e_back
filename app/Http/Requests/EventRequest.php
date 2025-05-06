@@ -31,6 +31,8 @@ class EventRequest extends FormRequest
             'room_id' => 'nullable|exists:rooms,id',
             'meet_link' => 'nullable|string',
             'members' => 'nullable|array', // TODO: Add validation for members
+            'recurrency_type' => 'nullable|integer|between:1,4',
+            'recurrency_end' => 'nullable|date_format:Y-m-d', // TODO: Add validation for recurrency end date
         ];
     }
 }

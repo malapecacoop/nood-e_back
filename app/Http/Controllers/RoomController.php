@@ -13,14 +13,6 @@ class RoomController extends Controller
 {
     public function index(Request $request)
     {
-        $dateStart = $request->get('start') ? new Carbon($request->get('start')) : now()->startOfMonth();
-        $dateEnd = $request->get('end') ? new Carbon($request->get('end')) : now()->addMonth()->startOfMonth();
-
-        //if dateEnd > dateStart + 1 month, set dateEnd to dateStart + 1 month
-        if ($dateEnd->diffInMonths($dateStart, true) > 1) {
-            $dateEnd = $dateStart->copy()->addMonth();
-        }
-
         $rooms = Room::query();
 
         // by default, show only available rooms
@@ -28,10 +20,7 @@ class RoomController extends Controller
             $rooms = $rooms->isAvailable();
         }
 
-        $rooms = $rooms->with(['events' => function($query) use ($dateStart, $dateEnd) {
-            $query->where('start', '>=', $dateStart)
-                ->where('end', '<', $dateEnd);
-        }])->get();
+        $rooms = $rooms->get();
 
         return response()->json($rooms, 200);
     }
@@ -61,19 +50,6 @@ class RoomController extends Controller
 
     public function show(Request $request, Room $room)
     {
-        $dateStart = $request->get('start') ? new Carbon($request->get('start')) : now()->startOfMonth();
-        $dateEnd = $request->get('end') ? new Carbon($request->get('end')) : now()->addMonth()->startOfMonth();
-
-        //if dateEnd > dateStart + 1 month, set dateEnd to dateStart + 1 month
-        if ($dateEnd->diffInMonths($dateStart, true) > 1) {
-            $dateEnd = $dateStart->copy()->addMonth();
-        }
-
-        $room->load(['events' => function($query) use ($dateStart, $dateEnd) {
-            $query->where('start', '>=', $dateStart)
-                ->where('end', '<', $dateEnd);
-        }]);
-
         return response()->json($room, 200);
     }
 

@@ -73,6 +73,9 @@ class UserSoftDeletionTest extends TestCase
 
     public function test_list_all_users_soft_deleted_are_not_shown(): void
     {
+        $countBefore = User::count();
+        $countBeforeWithSoftDeleted = User::withTrashed()->count();
+
         $user1 = User::factory()->create();
         $user2 = User::factory()->create();
 
@@ -82,7 +85,7 @@ class UserSoftDeletionTest extends TestCase
             ->get('/api/v1/users')
             ->assertStatus(200)
             ->assertJsonIsArray()
-            ->assertJsonCount(2)
+            ->assertJsonCount($countBefore + 1)
             ->assertJson(fn (AssertableJson $json) => $json
                 ->missing($user1->email)
                 ->etc()
@@ -92,7 +95,7 @@ class UserSoftDeletionTest extends TestCase
             ->get('/api/v1/users?show_deleted=1')
             ->assertStatus(200)
             ->assertJsonIsArray()
-            ->assertJsonCount(3);
+            ->assertJsonCount($countBeforeWithSoftDeleted + 2);
     }
 
     public function test_show_topics_of_user_soft_deleted_are_shown_with_user_data(): void

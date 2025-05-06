@@ -84,141 +84,80 @@ class EventCrudAuthTest extends TestCase
             ->assertJsonCount(2);
     }
 
-    public function test_list_events_date_filter(): void
+    public function test_list_events_date_filter_dont_show_more_than_two_months(): void
     {
         $room = $this->createRoom();
-        $event1 = $this->createEvent($room, $this->user);
-        $event1->update(['start' => now()->subMonth()]);
-        $event1->update(['end' => now()->subMonth()->addHour()]);
+        
+        $veryPastEvent = $this->createEvent($room, $this->user);
+        $veryPastEvent->update(['start' => now()->subMonthsNoOverflow(3)]);
+        $veryPastEvent->update(['end' => now()->subMonthsNoOverflow(3)->addHour()]);
 
-        $event2 = $this->createEvent($room, $this->user);
+        $veryFutureEvent = $this->createEvent($room, $this->user);
+        $veryFutureEvent->update(['start' => now()->addMonthsNoOverflow(3)]);
+        $veryFutureEvent->update(['end' => now()->addMonthsNoOverflow(3)->addHour()]);
 
-        $event3 = $this->createEvent($room, $this->user);
-        $event3->update(['start' => now()->addMonth()]);
-        $event3->update(['end' => now()->addMonth()->addHour()]);
+        $pastMonthEvent = $this->createEvent($room, $this->user);
+        $pastMonthEvent->update(['start' => now()->subMonthNoOverflow()]);
+        $pastMonthEvent->update(['end' => now()->subMonthNoOverflow()->addHour()]);
 
-        // TODO: this test is not working
+        $todayEvent = $this->createEvent($room, $this->user);
+        $todayEvent->update(['start' => now()]);
+        $todayEvent->update(['end' => now()->addHour()]);
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events')
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event2->id)
-        //         ->etc()
-        //     );
+        $nextMonthEvent = $this->createEvent($room, $this->user);
+        $nextMonthEvent->update(['start' => now()->addMonthNoOverflow()]);
+        $nextMonthEvent->update(['end' => now()->addMonthNoOverflow()->addHour()]);
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events?start=' . now()->subMonth()->startOfMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event1->id)
-        //         ->etc()
-        //     );
+        // without dates, show range is from beginning of the month + 2 months
+        $this->authenticated()
+            ->get('/api/v1/events')
+            ->assertStatus(200)
+            ->assertJsonCount(2)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $todayEvent->id)
+                ->where('1.id', $nextMonthEvent->id)
+                ->etc()
+            );
 
-        // $this->authenticated()
-        //     ->get('/api/v1/events?start=' . now()->addMonth()->startOfMonth()->format('Y-m-d') . '&end=' . now()->addMonth()->endofMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('0.id', $event3->id)
-        //         ->etc()
-        //     );
+        // with start date, show range is from start date + 2 months
+        $this->authenticated()
+            ->get('/api/v1/events?start=' . now()->subMonthNoOverflow(1)->startOfMonth()->format('Y-m-d'))
+            ->assertStatus(200)
+            ->assertJsonCount(2)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $pastMonthEvent->id)
+                ->where('1.id', $todayEvent->id)
+                ->etc()
+            );
+
+        // with start and end date, show range is from start date to end date
+        $this->authenticated()
+            ->get('/api/v1/events?start=' . now()->subMonthNoOverflow(1)->startOfMonth()->format('Y-m-d') . '&end=' . now()->subMonthNoOverflow(1)->endOfMonth()->format('Y-m-d'))
+            ->assertStatus(200)
+            ->assertJsonCount(1)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $pastMonthEvent->id)
+                ->etc()
+            );
     }
 
-    public function test_list_rooms_events_date_filter(): void
+    public function test_auth_user_can_list_all_events_that_use_rooms_even_if_not_owned(): void
     {
         $room = $this->createRoom();
         $event1 = $this->createEvent($room, $this->user);
-        $event1->update(['start' => now()->subMonth()]);
-        $event1->update(['end' => now()->subMonth()->addHour()]);
+        
+        $user1 = User::factory()->create();
+        $event2 = $this->createEvent($room, $user1);
 
-        $event2 = $this->createEvent($room, $this->user);
-
-        $event3 = $this->createEvent($room, $this->user);
-        $event3->update(['start' => now()->addMonth()]);
-        $event3->update(['end' => now()->addMonth()->addHour()]);
-
-        // TODO: this test is not working
-
-        // $this->authenticated()
-        // ->get('/api/v1/rooms')
-        // ->assertStatus(200)
-        // ->assertJson(fn (AssertableJson $json) => $json
-        //     ->where('0.events', fn ($json) => $json
-        //         ->has(1)
-        //     )->etc()
-        // );
-
-        // $this->authenticated()
-        //     ->get('/api/v1/rooms?start=' . now()->subMonth()->startOfMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //     ->where('0.events', fn ($json) => $json
-        //         ->has(1)
-        //     )->etc()
-        //     );
-
-        // $this->authenticated()
-        //     ->get('/api/v1/rooms?start=' . now()->addMonth()->startOfMonth()->format('Y-m-d') . '&end=' . now()->addMonth()->endofMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //     ->where('0.events', fn ($json) => $json
-        //         ->has(1)
-        //     )->etc()
-        // );
-    }
-
-    public function test_get_room_events_date_filter(): void
-    {
-        $room = $this->createRoom();
-        $event1 = $this->createEvent($room, $this->user);
-        $event1->update(['start' => now()->subMonth()]);
-        $event1->update(['end' => now()->subMonth()->addHour()]);
-
-        $event2 = $this->createEvent($room, $this->user);
-
-        $event3 = $this->createEvent($room, $this->user);
-        $event3->update(['start' => now()->addMonth()]);
-        $event3->update(['end' => now()->addMonth()->addHour()]);
-
-        // TODO: this test is not working
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}")
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}?start=" . now()->subMonth()->startOfMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
-
-        // $this->authenticated()
-        //     ->get("/api/v1/rooms/{$room->id}?start=" . now()->addMonth()->startOfMonth()->format('Y-m-d') . '&end=' . now()->addMonth()->endofMonth()->format('Y-m-d'))
-        //     ->assertStatus(200)
-        //     ->assertJsonCount(1)
-        //     ->assertJson(fn (AssertableJson $json) => $json
-        //         ->where('events', fn ($json) => $json
-        //             ->count(1)
-        //             ->etc()
-        //         )->etc()
-        //     );
+        $this->authenticated()
+            ->get('/api/v1/events/rooms')
+            ->assertStatus(200)
+            ->assertJsonCount(2)
+            ->assertJson(fn (AssertableJson $json) => $json
+                ->where('0.id', $event1->id)
+                ->where('1.id', $event2->id)
+                ->etc()
+            );
     }
 
     public function test_auth_user_can_get_free_rooms(): void
@@ -236,8 +175,8 @@ class EventCrudAuthTest extends TestCase
         $event->update(['end' => now()->addDay()->setHour(14)->setMinute(0)->setSecond(0)]);
 
         $this->authenticated()
-            ->get('/api/v1/rooms/free?start='.now()->addDay()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s')
-                .'&end=' . now()->addDay()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'))
+            ->get('/api/v1/rooms/free?start='.now()->addDay()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s')
+                .'&end=' . now()->addDay()->setHour(13)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'))
             ->assertStatus(200)
             ->assertJsonIsArray()
             ->assertJsonCount(2)
@@ -263,8 +202,8 @@ class EventCrudAuthTest extends TestCase
             ->assertJson([
                 'title' => 'Event title',
                 'description' => 'Event description',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'meet_link' => 'https://meet.google.com/abc-def-ghi',
                 'room_id' => $room->id,
                 'author_id' => $this->user->id
@@ -276,14 +215,14 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->post('/api/v1/events', [
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertCreated()
             ->assertJson([
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $this->user->id
             ]);
     }
@@ -296,13 +235,13 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])->assertStatus(200)
             ->assertJson([
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $this->user->id
             ]);
     }
@@ -317,8 +256,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertStatus(403);
     }
@@ -334,18 +273,17 @@ class EventCrudAuthTest extends TestCase
             ->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
             ])
             ->assertStatus(200)
             ->assertJson([
                 'title' => 'Updated event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
                 'author_id' => $user->id
             ]);
     }
-
 
     public function test_auth_user_can_create_event_with_members(): void
     {
@@ -355,8 +293,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->post('/api/v1/events', [
                 'title' => 'Event title',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id, $user2->id]
             ])
             ->assertCreated(201)
@@ -380,8 +318,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Event title updated',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id, $user2->id]
             ])
             ->assertStatus(200)
@@ -397,8 +335,8 @@ class EventCrudAuthTest extends TestCase
         $this->authenticated()
             ->put("/api/v1/events/{$event->id}", [
                 'title' => 'Event title updated',
-                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
-                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(14)->setMinute(0)->setSecond(0)->setMillisecond(0)->format('Y-m-d H:i:s'),
                 'members' => [$user1->id]
             ])
             ->assertStatus(200)
@@ -478,4 +416,50 @@ class EventCrudAuthTest extends TestCase
         ]);
     }
 
+    public function test_event_with_room_can_only_be_created_if_room_is_available(): void
+    {
+        $room = $this->createRoom();
+        $event1 = $this->createEvent($room, $this->user);
+
+        // Create a second event with the same room but available time
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(11)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room->id,
+            ])
+            ->assertCreated()
+            ->assertJson([
+                'title' => 'Event title',
+                'start' => now()->setHour(11)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'end' => now()->setHour(12)->setMinute(0)->setSecond(0)->setMillisecond(0)->toISOString(),
+                'author_id' => $this->user->id,
+                'room_id' => $room->id
+            ]);
+
+        // Create a third event with the same room but not available time
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room->id,
+            ])
+            ->assertStatus(409)
+            ->assertJson(['message' => 'Room is not available for the specified time']);
+
+        $room2 = $this->createRoom();
+        $room2->update(['is_available' => false]);
+        // Create a fourth event with a room that is not available
+        $this->authenticated()
+            ->post('/api/v1/events', [
+                'title' => 'Event title',
+                'start' => now()->setHour(12)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'end' => now()->setHour(13)->setMinute(0)->setSecond(0)->format('Y-m-d H:i:s'),
+                'room_id' => $room2->id,
+            ])
+            ->assertStatus(409)
+            ->assertJson(['message' => 'Room is not available for the specified time']);
+    }
 }

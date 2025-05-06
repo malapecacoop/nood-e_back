@@ -25,7 +25,7 @@
     </style>
 </head>
     <body>
-        <table class="wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-image: url('https://noode.netlify.app/images/page-background.webp'); background-size: cover; background-position: center;">
+        <table class="wrapper" width="100%" cellpadding="0" cellspacing="0" role="presentation" style="background-image: url('{{ config('app.frontend_url') }}/images/page-background.webp'); background-size: cover; background-position: center;">
             <tr>
                 <td align="center">
                     <table class="content" width="100%" cellpadding="0" cellspacing="0" role="presentation"
